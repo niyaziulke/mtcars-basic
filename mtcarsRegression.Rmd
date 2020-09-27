@@ -1,0 +1,105 @@
+---
+title: "Automatic vs. Manual Cars Mpg"
+author: "Niyazi Ülke"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Overview
+This is a course project of the Regression Models MOOC by JHU.
+The relationship between mpg and am variables in mtcars dataset will be examined by regression. Mpg is an abbreviation for miles per gallon,
+and is a measure of fuel efficiency. Am represents if the car is automatic (am==0) or manual (am==1). For more information about the dataset, please visit:
+
+https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html
+
+## Exploratory Analysis
+
+Load the data and simply explore it.
+
+```{r }
+library(datasets)
+library(ggplot2)
+data(mtcars)
+str(mtcars)
+
+```
+
+Some variables are actually factor variables. They should be used accordingly.
+
+```{r }
+mtcars$cyl = as.factor(mtcars$cyl)
+mtcars$vs = as.factor(mtcars$vs)
+
+mtcars$am = as.factor(mtcars$am)
+levels(mtcars$am) = c("Automatic", "Manual")
+
+mtcars$gear = as.factor(mtcars$gear)
+mtcars$carb = as.factor(mtcars$carb)
+```
+
+
+Draw a boxplot of data. See Appendix, ***A1*** . 
+Automatic cars seem to have lower mpg.
+
+## Significance of the Difference
+
+Check if mpg values of automatic cars are significantly less than manual cars. 
+```{r }
+t.test(mpg~am , data=mtcars , alternative = "less")$p.value
+```
+Since p-value is much less than 0.05, there is enough evidence to reject the null hypothesis and state that automatic cars have lower mpg values . 
+
+## Creating Regression Model
+
+Trying a model which mpg depends only on ***am***  variable (automatic - manual)
+```{r }
+single_model = lm(mpg ~ am, mtcars)
+summary(single_model)
+```
+This model suggests a manual car has 7.245 higher mpg than an automatic one. The coefficients are significant but R-squared is **0.36** . Thus, this model only explains %36 of variance in data and obviously is not a sufficient model.
+
+&nbsp;
+
+For a better model, first create a model using all variables, then with step function find a good model.
+```{r }
+final_model = step(lm(mpg ~ . ,mtcars), trace= FALSE)
+summary(final_model)
+```
+This model has more variables than the first model. Thus the mpg difference between manual and automatic cars is lower than the first model, it is only 1.81 mpg. R-squared of the model is **0.865** which means the model can explain %86 of the variance in data. See **A2** for residual analysis. The model is good enough.
+
+&nbsp;
+
+Perform ANOVA test to compare the models.
+```{r }
+anova(single_model,final_model)
+```
+The models are significantly different.
+
+## Conclusion
+
+Estimating mpg only by am is not sufficient and overestimates the mpg difference. By using final_model, it can be stated that on average manual cars have 1.81 higher mpg than automatic ones.
+
+## Appendix
+
+### A1: Automatic vs. Manual Cars MPG Comparison
+
+```{r, echo=FALSE}
+ggplot(data=mtcars, aes(x = am, y = mpg, fill = am)) +
+  xlab("") +
+  ylab("Miles Per Gallon") +
+  theme(legend.position = "none") +
+  geom_boxplot()
+```
+
+### A2: Residual Plots of Final Model
+
+```{r, echo=FALSE }
+par(mfrow = c(2, 2))
+plot(final_model)
+```
+
+
